@@ -1,0 +1,17 @@
+.fa-long-arrow-up {
+    color: #198754;
+
+}
+
+.fa-long-arrow-down {
+    color: #842029;
+}
+
+.fa {
+    display: table-cell;
+
+}
+
+.previousPrice {
+    font-size: 11px;
+}
