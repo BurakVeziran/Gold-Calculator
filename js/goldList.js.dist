@@ -2,6 +2,6 @@ var goldList = [
   {
     "name": "Gold Label Name",
     "quantity": 100,
-    "gram": 1.89
+    "gram": 1.00
   }
 ]
