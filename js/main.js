@@ -1,67 +1,57 @@
-$(document).ready(function () {
+document.addEventListener("DOMContentLoaded", function() {
     init();
 });
-
-function init () {
+function init() {
     getCurrencies();
-    calculateexchange();
+    calculateExchange();
     fillHeader();
     tableAppend();
     totalAppend();
     localStorageFunction();
 }
-
-var date,apiDate,storagePrices;
-
-var currencySymbols = {
+let date, apiDate, storagePrices;
+let currencySymbols = {
     'try': '₺',
     'usd': '$'
-}
-
-var total = {
+};
+let total = {
     'try': 0,
     'usd': 0
-}
+};
 
-var currencies;
-var table = $('#tableBody');
-var calculatedCurrencies;
-
-
+let currencies;
+let table = document.getElementById('tableBody');
+let calculatedCurrencies;
 function getCurrencies() {
-    $.ajax({
-        url: "http://data.fixer.io/api/latest?access_key=48de17dda4a5151659c8e521c0492eaa&format=1",
-        type: "GET",
-        dataType: "json",
-        async: false,
-        success: function (data) {
+    let xhr = new XMLHttpRequest();
+    xhr.open("GET", "http://data.fixer.io/api/latest?access_key=YOUR_API_KEY", false);
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            const data = JSON.parse(xhr.responseText);
             currencies = data.rates;
-            apiDate = data.timestamp
-        },
-        error: function () {
+            apiDate = data.timestamp;
+        } else {
             console.log("Error in the request");
         }
-    });
+    };
+    xhr.send();
 }
-
-function calculateexchange() {
+function calculateExchange() {
     calculatedCurrencies = {
         "usd": currencies.TRY / currencies.USD,
         "gau": (currencies.TRY / currencies.XAU) / 31.103,
         "xau": (currencies.TRY / currencies.XAU),
         "eur": currencies.TRY
-    }
+    };
 }
-
 function fillHeader() {
-    $('#dollar').html(formatNumber(calculatedCurrencies.usd, currencySymbols.try))
-    $('#gau').html(formatNumber(calculatedCurrencies.gau, currencySymbols.try))
-    $('#xau').html(formatNumber(calculatedCurrencies.xau, currencySymbols.try))
-    $('#euro').html(formatNumber(currencies.TRY, currencySymbols.try))
+    document.getElementById('dollar').innerHTML = formatNumber(calculatedCurrencies.usd, currencySymbols.try);
+    document.getElementById('gau').innerHTML = formatNumber(calculatedCurrencies.gau, currencySymbols.try);
+    document.getElementById('xau').innerHTML = formatNumber(calculatedCurrencies.xau, currencySymbols.try);
+    document.getElementById('euro').innerHTML = formatNumber(currencies.TRY, currencySymbols.try);
 }
-
 function formatNumber(number, symbol) {
-    var result = number.toFixed(4) + symbol;
+    let result = number.toFixed(4) + symbol;
     if (symbol === currencySymbols.usd) {
         result = symbol + number.toFixed(4);
     }
@@ -69,11 +59,11 @@ function formatNumber(number, symbol) {
 }
 
 function tableAppend() {
-    var rows = '';
-    var rowClass = '';
-    var prices;
-    for (var i = 0; i < goldList.length; i++) {
-        var list = goldList[i];
+    let rows = '';
+    let rowClass = '';
+    let prices;
+    for (let i = 0; i < goldList.length; i++) {
+        let list = goldList[i];
 
         prices = {
             'totalGram': (list.gram * list.quantity),
@@ -95,12 +85,12 @@ function tableAppend() {
         total.usd = (total.usd + ((list.gram * list.quantity) * calculatedCurrencies.gau) / calculatedCurrencies.usd);
         total.try = (total.try + (list.gram * list.quantity) * calculatedCurrencies.gau);
     }
-    table.append(rows);
+    document.getElementById('tableBody').innerHTML = rows;
 }
 
 function totalAppend() {
     rows = '';
-    $.each(total, function (key, value) {
+    Object.keys(total).forEach(function(key) {
         rows += '<tr>' +
             ' <td scope="row"></td>' +
             '<td></td>' +
@@ -108,15 +98,15 @@ function totalAppend() {
             '<td></td>' +
             '<td></td>' +
             '<td>Total (' + key.toUpperCase() + ')</td>' +
-            '<td>' + formatNumber(value, currencySymbols[key]) + '</td>' +
+            '<td>' + formatNumber(total[key], currencySymbols[key]) + '</td>' +
             '</tr>';
     });
-    table.append(rows);
+    document.getElementById('tableBody').innerHTML += rows;
 }
 
 function localStorageFunction() {
     if (checkTime()) {
-        var moneyConvert = {
+        let moneyConvert = {
             'date': date,
             'currencies': [
                 {
@@ -142,7 +132,7 @@ function localStorageFunction() {
 }
 
 function localCalculate(list, prices) {
-    var localStorageCurrencies = JSON.parse(localStorage.getItem('prices'));
+    let localStorageCurrencies = JSON.parse(localStorage.getItem('prices'));
 
     storagePrices = {
         'tryUnit': localStorageCurrencies === null ? prices.tryUnit : (list.gram * localStorageCurrencies.currencies[2].price),
@@ -152,14 +142,14 @@ function localCalculate(list, prices) {
             ((list.gram * list.quantity) * localStorageCurrencies.currencies[2].price) / localStorageCurrencies.currencies[0].price
     }
 
-    var result = {
+    let result = {
         'tryUnit': '',
         'dollarUnit': '',
         'totalTry': '',
         'totalUsd': ''
     }
 
-    var types = {
+    let types = {
         'down': 'fa fa-long-arrow-down',
         'up': 'fa fa-long-arrow-up'
     }
@@ -170,20 +160,17 @@ function localCalculate(list, prices) {
         result.tryUnit = types.down;
     }
 
-
     if (prices.dollarUnit > storagePrices.dollarUnit) {
         result.dollarUnit = types.up;
     } else if (prices.dollarUnit < storagePrices.dollarUnit) {
         result.dollarUnit = types.down;
     }
 
-
     if (prices.totalTry > storagePrices.totalTry) {
         result.totalTry = types.up;
     } else if (prices.totalTry < storagePrices.totalTry) {
         result.totalTry = types.down;
     }
-
 
     if (prices.totalUsd > storagePrices.totalUsd) {
         result.totalUsd = types.up;
@@ -195,22 +182,19 @@ function localCalculate(list, prices) {
 
 function checkTime() {
     date = new Date(apiDate * 1000);
-    var epochYesterday = + new Date()
-    var yesterday = new Date (epochYesterday - (86400*1000))
+    let epochYesterday = + new Date()
+    let yesterday = new Date (epochYesterday - (86400*1000))
 
-    $('#date').append(("Last Update: "+date.getDate()+
+    document.getElementById('date').innerHTML = ("Last Update: "+date.getDate()+
         "/"+(date.getMonth()+1)+
         "/"+date.getFullYear()+
         " "+date.getHours()+
         ":"+date.getMinutes()+
-        ":"+date.getSeconds()))
+        ":"+date.getSeconds());
 
-    var result = false
+    let result = false
     if (date.getDate() !== yesterday.getDate() && date.getMonth() !== yesterday.getMonth() && date.getFullYear() !== yesterday.getFullYear()  ) {
         result = true
     }
     return result;
 }
-
-
-
